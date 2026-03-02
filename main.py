@@ -882,3 +882,55 @@ def cmd_version() -> None:
 @dataclass
 class RemixMetadata:
     title: str
+    content_hash: str
+    parent_stem_id: str
+    creator: str
+    bpm: int
+    key: str
+    tags: List[str]
+    created_at: float = field(default_factory=time.time)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": self.title,
+            "content_hash": self.content_hash,
+            "parent_stem_id": self.parent_stem_id,
+            "creator": self.creator,
+            "bpm": self.bpm,
+            "key": self.key,
+            "tags": self.tags,
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "RemixMetadata":
+        return cls(
+            title=d.get("title", ""),
+            content_hash=d.get("content_hash", ""),
+            parent_stem_id=d.get("parent_stem_id", ""),
+            creator=d.get("creator", ""),
+            bpm=int(d.get("bpm", 0)),
+            key=d.get("key", ""),
+            tags=list(d.get("tags", [])),
+            created_at=float(d.get("created_at", time.time())),
+        )
+
+
+class RemixRegistry:
+    def __init__(self, path: Optional[Path] = None):
+        self.path = path or Path.home() / MixITConstants.CONFIG_DIR / "remixes.json"
+        self.remixes: Dict[str, RemixMetadata] = {}
+        self._load()
+
+    def _load(self) -> None:
+        if self.path.exists():
+            try:
+                with open(self.path) as f:
+                    data = json.load(f)
+                for k, v in data.get("remixes", {}).items():
+                    self.remixes[k] = RemixMetadata.from_dict(v)
+            except Exception:
+                pass
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
