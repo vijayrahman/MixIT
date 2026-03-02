@@ -518,3 +518,55 @@ class MixFinexClient:
             raw = bytes.fromhex(data.replace("0x", ""))
             return ExchangeStats(
                 total_stems_listed=_decode_uint256(raw[0:32]),
+                total_bids_placed=_decode_uint256(raw[32:64]),
+                total_volume=_decode_uint256(raw[64:96]),
+                total_fees=_decode_uint256(raw[96:128]),
+                treasury_accum=_decode_uint256(raw[128:160]),
+                vault_accum=_decode_uint256(raw[160:192]),
+                current_block=rpc_eth_block_number(self.rpc_url),
+            )
+        except Exception:
+            return ExchangeStats(0, 0, 0, 0, 0, 0)
+
+    def get_stem_ids_by_lister(self, lister: str) -> List[str]:
+        try:
+            data = self._call("getStemIdsByLister(address)", _encode_address(lister))
+            if not data or data == "0x":
+                return []
+            raw = bytes.fromhex(data.replace("0x", ""))
+            n = _decode_uint256(raw[0:32])
+            out = []
+            for i in range(n):
+                out.append(_decode_bytes32(raw[32 + i * 32:32 + (i + 1) * 32]))
+            return out
+        except Exception:
+            return []
+
+    def get_bid_ids_by_bidder(self, bidder: str) -> List[str]:
+        try:
+            data = self._call("getBidIdsByBidder(address)", _encode_address(bidder))
+            if not data or data == "0x":
+                return []
+            raw = bytes.fromhex(data.replace("0x", ""))
+            n = _decode_uint256(raw[0:32])
+            out = []
+            for i in range(n):
+                out.append(_decode_bytes32(raw[32 + i * 32:32 + (i + 1) * 32]))
+            return out
+        except Exception:
+            return []
+
+    def can_fill_stem(self, stem_id: str) -> bool:
+        try:
+            data = self._call("canFillStem(bytes32)", _encode_bytes32(stem_id))
+            if not data or data == "0x":
+                return False
+            return _decode_uint256(bytes.fromhex(data.replace("0x", ""))) != 0
+        except Exception:
+            return False
+
+    def can_fill_bid(self, bid_id: str) -> bool:
+        try:
+            data = self._call("canFillBid(bytes32)", _encode_bytes32(bid_id))
+            if not data or data == "0x":
+                return False
