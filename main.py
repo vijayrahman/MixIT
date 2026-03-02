@@ -310,3 +310,55 @@ def parse_wei(s: str) -> int:
     if s.endswith("ETH"):
         return eth_to_wei(float(s[:-3].strip()))
     if s.endswith("WEI"):
+        return int(s[:-3].strip())
+    return int(s)
+
+
+# -----------------------------------------------------------------------------
+# Contract ABI (minimal for MixFinex-style)
+# ------------------------------------------------------------------------------
+
+MIXFINEX_ABI = [
+    {"inputs": [], "name": "getConfig", "outputs": [{"internalType": "address", "name": "_treasury", "type": "address"}, {"internalType": "address", "name": "_feeVault", "type": "address"}, {"internalType": "address", "name": "_exchangeKeeper", "type": "address"}, {"internalType": "address", "name": "_keeper", "type": "address"}, {"internalType": "uint256", "name": "_feeBps", "type": "uint256"}, {"internalType": "uint256", "name": "_minListingWei", "type": "uint256"}, {"internalType": "uint256", "name": "_maxListingWei", "type": "uint256"}, {"internalType": "uint256", "name": "_defaultExpiryBlocks", "type": "uint256"}, {"internalType": "uint256", "name": "_deployedBlock", "type": "uint256"}, {"internalType": "bool", "name": "_exchangePaused", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}], "name": "getStem", "outputs": [{"internalType": "address", "name": "lister", "type": "address"}, {"internalType": "bytes32", "name": "contentHash", "type": "bytes32"}, {"internalType": "uint256", "name": "askWei", "type": "uint256"}, {"internalType": "uint256", "name": "listedAtBlock", "type": "uint256"}, {"internalType": "uint256", "name": "expiryBlock", "type": "uint256"}, {"internalType": "bool", "name": "filled", "type": "bool"}, {"internalType": "bool", "name": "delisted", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "bidId", "type": "bytes32"}], "name": "getBid", "outputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}, {"internalType": "address", "name": "bidder", "type": "address"}, {"internalType": "uint256", "name": "bidWei", "type": "uint256"}, {"internalType": "uint256", "name": "placedAtBlock", "type": "uint256"}, {"internalType": "uint256", "name": "expiryBlock", "type": "uint256"}, {"internalType": "bool", "name": "filled", "type": "bool"}, {"internalType": "bool", "name": "cancelled", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "contentHash", "type": "bytes32"}, {"internalType": "uint256", "name": "askWei", "type": "uint256"}], "name": "listStem", "outputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}, {"internalType": "uint256", "name": "bidWei", "type": "uint256"}], "name": "placeBid", "outputs": [{"internalType": "bytes32", "name": "bidId", "type": "bytes32"}], "stateMutability": "payable", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}], "name": "fillStemOffer", "outputs": [], "stateMutability": "payable", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "bidId", "type": "bytes32"}], "name": "fillBid", "outputs": [], "stateMutability": "payable", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}], "name": "delistStem", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "bidId", "type": "bytes32"}], "name": "cancelBid", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [], "name": "getExchangeStats", "outputs": [{"internalType": "uint256", "name": "totalStemsListed", "type": "uint256"}, {"internalType": "uint256", "name": "totalBidsPlaced", "type": "uint256"}, {"internalType": "uint256", "name": "totalVolume", "type": "uint256"}, {"internalType": "uint256", "name": "totalFees", "type": "uint256"}, {"internalType": "uint256", "name": "treasuryAccum", "type": "uint256"}, {"internalType": "uint256", "name": "vaultAccum", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "address", "name": "lister", "type": "address"}], "name": "getStemIdsByLister", "outputs": [{"internalType": "bytes32[]", "name": "", "type": "bytes32[]"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "address", "name": "bidder", "type": "address"}], "name": "getBidIdsByBidder", "outputs": [{"internalType": "bytes32[]", "name": "", "type": "bytes32[]"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}], "name": "canFillStem", "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "bidId", "type": "bytes32"}], "name": "canFillBid", "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "contentHash", "type": "bytes32"}, {"internalType": "address", "name": "lister", "type": "address"}, {"internalType": "uint256", "name": "seq", "type": "uint256"}], "name": "computeStemId", "outputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}], "stateMutability": "pure", "type": "function"},
+    {"inputs": [{"internalType": "bytes32", "name": "stemId", "type": "bytes32"}, {"internalType": "address", "name": "bidder", "type": "address"}, {"internalType": "uint256", "name": "bidWei", "type": "uint256"}, {"internalType": "uint256", "name": "seq", "type": "uint256"}], "name": "computeBidId", "outputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}], "stateMutability": "pure", "type": "function"},
+]
+
+
+# -----------------------------------------------------------------------------
+# Hex / bytes32 conversion
+# ------------------------------------------------------------------------------
+
+def hex_to_bytes32(s: str) -> bytes:
+    s = s.replace("0x", "").lower()
+    if len(s) != 64:
+        s = s.zfill(64)[:64]
+    return bytes.fromhex(s)
+
+
+def bytes32_to_hex(b: bytes) -> str:
+    return "0x" + b.hex().zfill(64)[:64]
+
+
+def address_to_hex(addr: str) -> str:
+    addr = addr.replace("0x", "").lower()
+    return "0x" + addr.zfill(40)[:40]
+
+
+# -----------------------------------------------------------------------------
+# RPC client (no web3 dependency for minimal setup)
+# ------------------------------------------------------------------------------
+
