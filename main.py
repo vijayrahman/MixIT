@@ -986,3 +986,55 @@ def report_exchange_stats(client: MixFinexClient) -> Dict[str, Any]:
 def report_lister_activity(client: MixFinexClient, lister: str) -> Dict[str, Any]:
     addr = address_to_hex(lister)
     stem_ids = client.get_stem_ids_by_lister(addr)
+    stems = []
+    for sid in stem_ids[:50]:
+        s = client.get_stem(sid)
+        if s:
+            stems.append({
+                "stem_id": sid,
+                "ask_wei": s.ask_wei,
+                "filled": s.filled,
+                "delisted": s.delisted,
+                "expiry_block": s.expiry_block,
+            })
+    return {"lister": addr, "stem_count": len(stem_ids), "stems_sample": stems}
+
+
+def report_bidder_activity(client: MixFinexClient, bidder: str) -> Dict[str, Any]:
+    addr = address_to_hex(bidder)
+    bid_ids = client.get_bid_ids_by_bidder(addr)
+    bids = []
+    for bid in bid_ids[:50]:
+        b = client.get_bid(bid)
+        if b:
+            bids.append({
+                "bid_id": bid,
+                "stem_id": b.stem_id,
+                "bid_wei": b.bid_wei,
+                "filled": b.filled,
+                "cancelled": b.cancelled,
+                "expiry_block": b.expiry_block,
+            })
+    return {"bidder": addr, "bid_count": len(bid_ids), "bids_sample": bids}
+
+
+# -----------------------------------------------------------------------------
+# Wallet simulation (no private key sign; build intent only)
+# ------------------------------------------------------------------------------
+
+@dataclass
+class TxIntent:
+    to: str
+    value_wei: int
+    data_hex: str
+    gas_limit: int
+    description: str
+
+
+def build_list_stem_intent(contract: str, content_hash_hex: str, ask_wei: int) -> TxIntent:
+    sel = _abi_selector("listStem(bytes32,uint256)")
+    data = sel + _encode_bytes32(content_hash_hex) + _encode_uint256(ask_wei)
+    return TxIntent(
+        to=contract,
+        value_wei=0,
+        data_hex="0x" + data.hex(),
