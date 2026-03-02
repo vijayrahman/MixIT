@@ -726,3 +726,55 @@ def cmd_catalog(args: List[str], catalog: MixITCatalog) -> None:
         else:
             print(content_hash_from_string(args[1]))
 
+
+def cmd_stats(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured. Set contract_address in config.")
+        return
+    s = client.get_exchange_stats()
+    s.current_block = client.current_block()
+    print(s.to_display())
+    print(f"Current block: {s.current_block}")
+
+
+def cmd_stem(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 2:
+        print("Usage: stem get <stemId>")
+        return
+    stem_id = args[1]
+    if args[0] == "get":
+        s = client.get_stem(stem_id)
+        if s:
+            print(s.to_display(client.current_block()))
+        else:
+            print("Stem not found or invalid id.")
+
+
+def cmd_bid(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 2:
+        print("Usage: bid get <bidId>")
+        return
+    bid_id = args[1]
+    if args[0] == "get":
+        b = client.get_bid(bid_id)
+        if b:
+            print(b.to_display(client.current_block()))
+        else:
+            print("Bid not found or invalid id.")
+
+
+def cmd_lister(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 2:
+        print("Usage: lister <address>")
+        return
+    addr = address_to_hex(args[1])
+    ids = client.get_stem_ids_by_lister(addr)
