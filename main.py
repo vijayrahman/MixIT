@@ -206,3 +206,55 @@ class BidRecord:
             f"Bid {self.bid_id[:16]}... | stem={self.stem_id[:16]}... | "
             f"bidder={self.bidder[:10]}... | {self.bid_wei} wei | {status}"
         )
+
+
+@dataclass
+class CollabInvite:
+    collab_id: str
+    stem_id: str
+    inviter: str
+    invitee: str
+    share_bps: int
+    sent_at_block: int
+    accepted: bool
+    rejected: bool
+
+    def to_display(self) -> str:
+        state = "accepted" if self.accepted else ("rejected" if self.rejected else "pending")
+        return (
+            f"Collab {self.collab_id[:16]}... | stem={self.stem_id[:16]}... | "
+            f"inviter={self.inviter[:10]}... -> invitee={self.invitee[:10]}... | "
+            f"share={self.share_bps} bps | {state}"
+        )
+
+
+@dataclass
+class ExchangeStats:
+    total_stems_listed: int
+    total_bids_placed: int
+    total_volume: int
+    total_fees: int
+    treasury_accum: int
+    vault_accum: int
+    current_block: int = 0
+
+    def to_display(self) -> str:
+        return (
+            f"Stems: {self.total_stems_listed} | Bids: {self.total_bids_placed} | "
+            f"Volume: {self.total_volume} wei | Fees: {self.total_fees} wei | "
+            f"Treasury accum: {self.treasury_accum} | Vault accum: {self.vault_accum}"
+        )
+
+
+# -----------------------------------------------------------------------------
+# Content hash and stem helpers (music / remix)
+# ------------------------------------------------------------------------------
+
+def content_hash_from_bytes(data: bytes) -> str:
+    h = hashlib.sha256(data).hexdigest()
+    return "0x" + h.zfill(64)[:64]
+
+
+def content_hash_from_string(s: str) -> str:
+    return content_hash_from_bytes(s.encode("utf-8"))
+
