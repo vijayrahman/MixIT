@@ -466,3 +466,55 @@ class MixFinexClient:
             lister = _decode_address(raw[offset:offset+32]); offset += 32
             content_hash = _decode_bytes32(raw[offset:offset+32]); offset += 32
             ask_wei = _decode_uint256(raw[offset:offset+32]); offset += 32
+            listed_at = _decode_uint256(raw[offset:offset+32]); offset += 32
+            expiry = _decode_uint256(raw[offset:offset+32]); offset += 32
+            filled = _decode_uint256(raw[offset:offset+32]) != 0; offset += 32
+            delisted = _decode_uint256(raw[offset:offset+32]) != 0
+            return StemListing(
+                stem_id=stem_id,
+                lister=lister,
+                content_hash=content_hash,
+                ask_wei=ask_wei,
+                listed_at_block=listed_at,
+                expiry_block=expiry,
+                filled=filled,
+                delisted=delisted,
+            )
+        except Exception:
+            return None
+
+    def get_bid(self, bid_id: str) -> Optional[BidRecord]:
+        try:
+            data = self._call("getBid(bytes32)", _encode_bytes32(bid_id))
+            if not data or data == "0x" or len(data) < 2 + 32 * 7 * 2:
+                return None
+            raw = bytes.fromhex(data.replace("0x", ""))
+            offset = 0
+            stem_id = _decode_bytes32(raw[offset:offset+32]); offset += 32
+            bidder = _decode_address(raw[offset:offset+32]); offset += 32
+            bid_wei = _decode_uint256(raw[offset:offset+32]); offset += 32
+            placed_at = _decode_uint256(raw[offset:offset+32]); offset += 32
+            expiry = _decode_uint256(raw[offset:offset+32]); offset += 32
+            filled = _decode_uint256(raw[offset:offset+32]) != 0; offset += 32
+            cancelled = _decode_uint256(raw[offset:offset+32]) != 0
+            return BidRecord(
+                bid_id=bid_id,
+                stem_id=stem_id,
+                bidder=bidder,
+                bid_wei=bid_wei,
+                placed_at_block=placed_at,
+                expiry_block=expiry,
+                filled=filled,
+                cancelled=cancelled,
+            )
+        except Exception:
+            return None
+
+    def get_exchange_stats(self) -> ExchangeStats:
+        try:
+            data = self._call("getExchangeStats()")
+            if not data or data == "0x":
+                return ExchangeStats(0, 0, 0, 0, 0, 0)
+            raw = bytes.fromhex(data.replace("0x", ""))
+            return ExchangeStats(
+                total_stems_listed=_decode_uint256(raw[0:32]),
