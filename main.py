@@ -258,3 +258,55 @@ def content_hash_from_bytes(data: bytes) -> str:
 def content_hash_from_string(s: str) -> str:
     return content_hash_from_bytes(s.encode("utf-8"))
 
+
+def content_hash_from_file(path: Union[str, Path]) -> str:
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(str(path))
+    with open(path, "rb") as f:
+        return content_hash_from_bytes(f.read())
+
+
+def random_content_hash() -> str:
+    return "0x" + secrets.token_hex(32)
+
+
+def stem_id_compute(content_hash: str, lister: str, seq: int) -> str:
+    from hashlib import sha256
+    payload = f"{content_hash}_{lister}_{seq}"
+    return "0x" + sha256(payload.encode()).hexdigest()
+
+
+def bid_id_compute(stem_id: str, bidder: str, bid_wei: int, seq: int) -> str:
+    from hashlib import sha256
+    payload = f"{stem_id}_{bidder}_{bid_wei}_{seq}"
+    return "0x" + sha256(payload.encode()).hexdigest()
+
+
+def collab_id_compute(stem_id: str, inviter: str, invitee: str, seq: int) -> str:
+    from hashlib import sha256
+    payload = f"{stem_id}_{inviter}_{invitee}_{seq}"
+    return "0x" + sha256(payload.encode()).hexdigest()
+
+
+# -----------------------------------------------------------------------------
+# Wei / ETH formatting
+# ------------------------------------------------------------------------------
+
+def wei_to_eth(wei: int) -> float:
+    return wei / 1e18
+
+
+def eth_to_wei(eth: float) -> int:
+    return int(eth * 1e18)
+
+
+def format_wei(wei: int) -> str:
+    return f"{wei_to_eth(wei):.6f} ETH"
+
+
+def parse_wei(s: str) -> int:
+    s = s.strip().upper().replace(",", "")
+    if s.endswith("ETH"):
+        return eth_to_wei(float(s[:-3].strip()))
+    if s.endswith("WEI"):
