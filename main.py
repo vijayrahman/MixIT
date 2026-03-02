@@ -934,3 +934,55 @@ class RemixRegistry:
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.path, "w") as f:
+            json.dump({"remixes": {k: v.to_dict() for k, v in self.remixes.items()}}, f, indent=2)
+
+    def add(self, meta: RemixMetadata) -> None:
+        self.remixes[meta.content_hash] = meta
+        self.save()
+
+    def get(self, content_hash: str) -> Optional[RemixMetadata]:
+        return self.remixes.get(content_hash)
+
+    def by_parent(self, parent_stem_id: str) -> List[RemixMetadata]:
+        return [r for r in self.remixes.values() if r.parent_stem_id == parent_stem_id]
+
+    def list_all(self) -> List[RemixMetadata]:
+        return list(self.remixes.values())
+
+
+# -----------------------------------------------------------------------------
+# Export / report generation
+# ------------------------------------------------------------------------------
+
+def export_catalog_json(catalog: MixITCatalog) -> str:
+    return json.dumps(
+        {"entries": [e.to_dict() for e in catalog.list_all()], "version": 1},
+        indent=2,
+    )
+
+
+def export_remixes_json(registry: RemixRegistry) -> str:
+    return json.dumps(
+        {"remixes": [r.to_dict() for r in registry.list_all()], "version": 1},
+        indent=2,
+    )
+
+
+def report_exchange_stats(client: MixFinexClient) -> Dict[str, Any]:
+    s = client.get_exchange_stats()
+    s.current_block = client.current_block()
+    return {
+        "total_stems_listed": s.total_stems_listed,
+        "total_bids_placed": s.total_bids_placed,
+        "total_volume_wei": s.total_volume,
+        "total_fees_wei": s.total_fees,
+        "treasury_accum_wei": s.treasury_accum,
+        "vault_accum_wei": s.vault_accum,
+        "current_block": s.current_block,
+    }
+
+
+def report_lister_activity(client: MixFinexClient, lister: str) -> Dict[str, Any]:
+    addr = address_to_hex(lister)
+    stem_ids = client.get_stem_ids_by_lister(addr)
