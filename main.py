@@ -570,3 +570,55 @@ class MixFinexClient:
             data = self._call("canFillBid(bytes32)", _encode_bytes32(bid_id))
             if not data or data == "0x":
                 return False
+            return _decode_uint256(bytes.fromhex(data.replace("0x", ""))) != 0
+        except Exception:
+            return False
+
+    def current_block(self) -> int:
+        return rpc_eth_block_number(self.rpc_url)
+
+
+# -----------------------------------------------------------------------------
+# Catalog (local mock for stems / remixes)
+# ------------------------------------------------------------------------------
+
+@dataclass
+class CatalogEntry:
+    name: str
+    content_hash: str
+    artist: str
+    genre: str
+    duration_sec: int
+    created_at: float = field(default_factory=time.time)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "content_hash": self.content_hash,
+            "artist": self.artist,
+            "genre": self.genre,
+            "duration_sec": self.duration_sec,
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "CatalogEntry":
+        return cls(
+            name=d.get("name", ""),
+            content_hash=d.get("content_hash", ""),
+            artist=d.get("artist", ""),
+            genre=d.get("genre", ""),
+            duration_sec=int(d.get("duration_sec", 0)),
+            created_at=float(d.get("created_at", time.time())),
+        )
+
+
+class MixITCatalog:
+    def __init__(self, path: Optional[Path] = None):
+        self.path = path or Path.home() / MixITConstants.CONFIG_DIR / "catalog.json"
+        self.entries: Dict[str, CatalogEntry] = {}
+        self._load()
+
+    def _load(self) -> None:
+        if self.path.exists():
+            try:
