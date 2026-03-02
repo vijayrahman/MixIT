@@ -674,3 +674,55 @@ def split_royalty_among(amount_wei: int, shares_bps: List[int]) -> List[int]:
         return [0] * len(shares_bps)
     return [(amount_wei * bps) // total_bps for bps in shares_bps]
 
+
+# -----------------------------------------------------------------------------
+# CLI commands
+# ------------------------------------------------------------------------------
+
+def cmd_config(args: List[str], config: MixITConfig) -> None:
+    if not args:
+        print(json.dumps(config.to_dict(), indent=2))
+        return
+    if args[0] == "set":
+        if len(args) < 3:
+            print("Usage: config set <key> <value>")
+            return
+        key, val = args[1], args[2]
+        if key == "rpc_url":
+            config.rpc_url = val
+        elif key == "chain_id":
+            config.chain_id = int(val)
+        elif key == "contract_address":
+            config.contract_address = val
+        elif key == "treasury":
+            config.treasury = val
+        elif key == "fee_vault":
+            config.fee_vault = val
+        config.save()
+        print(f"Set {key} = {val}")
+    elif args[0] == "addresses":
+        for i in range(5):
+            print(random_address_eip55())
+
+
+def cmd_catalog(args: List[str], catalog: MixITCatalog) -> None:
+    if not args:
+        for e in catalog.list_all():
+            print(f"  {e.content_hash} | {e.name} | {e.artist} | {e.genre}")
+        return
+    if args[0] == "add":
+        name = args[1] if len(args) > 1 else "Untitled"
+        ch = random_content_hash()
+        entry = CatalogEntry(name=name, content_hash=ch, artist="", genre="", duration_sec=0)
+        catalog.add(entry)
+        print(f"Added: {ch} | {name}")
+    elif args[0] == "hash":
+        if len(args) < 2:
+            print("Usage: catalog hash <string_or_file>")
+            return
+        path = Path(args[1])
+        if path.exists():
+            print(content_hash_from_file(path))
+        else:
+            print(content_hash_from_string(args[1]))
+
