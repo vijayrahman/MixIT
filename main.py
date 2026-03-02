@@ -830,3 +830,55 @@ def cmd_royalty(args: List[str]) -> None:
     if len(args) < 3:
         print("Usage: royalty <amountWei> <shareBps>")
         return
+    amount = parse_wei(args[1])
+    share_bps = int(args[2])
+    r = compute_royalty_split(amount, share_bps)
+    print(f"Amount: {amount} wei | Share {share_bps} bps => {r} wei")
+
+
+def cmd_help() -> None:
+    print("MixIT — Music sharing and trading (MixFinex-style)")
+    print("  config [set <key> <value> | addresses]")
+    print("  catalog [add [name] | hash <string_or_file>]")
+    print("  stats")
+    print("  stem get <stemId>")
+    print("  bid get <bidId>")
+    print("  lister <address>")
+    print("  bidder <address>")
+    print("  canfill stem <stemId> | canfill bid <bidId>")
+    print("  fee <amountWei> [feeBps]")
+    print("  royalty <amountWei> <shareBps>")
+    print("  export catalog | export remixes")
+    print("  report [lister <addr> | bidder <addr>]")
+    print("  remix [add [title] [parentStemId]]")
+    print("  build list|bid|fillstem|fillbid|delist|cancel ...")
+    print("  genaddresses [count]")
+    print("  volume [stem <stemId> | lister <address>]")
+    print("  limits")
+    print("  paused")
+    print("  liststems <listerAddress> [limit]")
+    print("  listbids <bidderAddress> [limit]")
+    print("  collabshares <weight1> <weight2> [...]")
+    print("  validate")
+    print("  block")
+    print("  chain")
+    print("  health")
+    print("  expiry <blocks> | expiry days <number>")
+    print("  demo catalog [n] | demo remixes [n]")
+    print("  checksum <address>")
+    print("  about")
+    print("  info")
+    print("  version")
+
+
+def cmd_version() -> None:
+    print(f"{MixITConstants.APP_NAME} {MixITConstants.VERSION}")
+
+
+# -----------------------------------------------------------------------------
+# Remix and stem metadata (extended)
+# ------------------------------------------------------------------------------
+
+@dataclass
+class RemixMetadata:
+    title: str
