@@ -778,3 +778,55 @@ def cmd_lister(args: List[str], client: Optional[MixFinexClient]) -> None:
         return
     addr = address_to_hex(args[1])
     ids = client.get_stem_ids_by_lister(addr)
+    print(f"Stem ids for {addr}: {len(ids)}")
+    for i in ids[:20]:
+        print(f"  {i}")
+    if len(ids) > 20:
+        print(f"  ... and {len(ids) - 20} more")
+
+
+def cmd_bidder(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 2:
+        print("Usage: bidder <address>")
+        return
+    addr = address_to_hex(args[1])
+    ids = client.get_bid_ids_by_bidder(addr)
+    print(f"Bid ids for {addr}: {len(ids)}")
+    for i in ids[:20]:
+        print(f"  {i}")
+    if len(ids) > 20:
+        print(f"  ... and {len(ids) - 20} more")
+
+
+def cmd_can_fill(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 3:
+        print("Usage: canfill stem <stemId> | canfill bid <bidId>")
+        return
+    kind, id_ = args[1], args[2]
+    if kind == "stem":
+        print(client.can_fill_stem(id_))
+    else:
+        print(client.can_fill_bid(id_))
+
+
+def cmd_fee(args: List[str]) -> None:
+    if len(args) < 2:
+        print("Usage: fee <amountWei> [feeBps]")
+        return
+    amount = parse_wei(args[1])
+    fee_bps = int(args[2]) if len(args) > 2 else 35
+    f = compute_fee(amount, fee_bps)
+    net = amount - f
+    print(f"Amount: {amount} wei | Fee ({fee_bps} bps): {f} wei | Net: {net} wei")
+
+
+def cmd_royalty(args: List[str]) -> None:
+    if len(args) < 3:
+        print("Usage: royalty <amountWei> <shareBps>")
+        return
