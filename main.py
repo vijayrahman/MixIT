@@ -362,3 +362,55 @@ def address_to_hex(addr: str) -> str:
 # RPC client (no web3 dependency for minimal setup)
 # ------------------------------------------------------------------------------
 
+def _rpc_call(url: str, method: str, params: List[Any]) -> Any:
+    import urllib.request
+    body = json.dumps({"jsonrpc": "2.0", "method": method, "params": params, "id": 1}).encode()
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        out = json.loads(r.read().decode())
+    if "error" in out:
+        raise RuntimeError(out["error"].get("message", str(out["error"])))
+    return out.get("result")
+
+
+def rpc_eth_block_number(url: str) -> int:
+    return int(_rpc_call(url, "eth_blockNumber", []), 16)
+
+
+def rpc_eth_call(url: str, to: str, data: str) -> str:
+    return _rpc_call(url, "eth_call", [{"to": to, "data": data}, "latest"])
+
+
+def rpc_eth_chain_id(url: str) -> int:
+    return int(_rpc_call(url, "eth_chainId", []), 16)
+
+
+# -----------------------------------------------------------------------------
+# ABI encoding (minimal: function selector + uint256, address, bytes32)
+# ------------------------------------------------------------------------------
+
+def _abi_selector(signature: str) -> bytes:
+    h = _keccak256(signature.encode()).hex()
+    return bytes.fromhex(h[:8])
+
+
+def _encode_uint256(v: int) -> bytes:
+    return v.to_bytes(32, "big")
+
+
+def _encode_address(addr: str) -> bytes:
+    addr = addr.replace("0x", "").lower().zfill(40)[-40:]
+    return bytes.fromhex(addr).rjust(32, b"\x00")
+
+
+def _encode_bytes32(s: str) -> bytes:
+    b = hex_to_bytes32(s)
+    return b.rjust(32, b"\x00") if len(b) < 32 else b[:32]
+
+
+def _decode_uint256(data: bytes) -> int:
+    return int.from_bytes(data[-32:], "big")
+
+
+def _decode_address(data: bytes) -> str:
+    return "0x" + data[-20:].hex()
