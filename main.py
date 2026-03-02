@@ -154,3 +154,55 @@ class BidStatus(Enum):
     CANCELLED = 2
     EXPIRED = 3
     ACTIVE = 4
+
+
+@dataclass
+class StemListing:
+    stem_id: str
+    lister: str
+    content_hash: str
+    ask_wei: int
+    listed_at_block: int
+    expiry_block: int
+    filled: bool
+    delisted: bool
+    volume_wei: int = 0
+    royalty_paid: int = 0
+    bid_count: int = 0
+    collab_count: int = 0
+
+    @property
+    def is_active(self) -> bool:
+        return not self.filled and not self.delisted and self.expiry_block > 0
+
+    def to_display(self, block: int = 0) -> str:
+        status = "active" if self.is_active and (block == 0 or block < self.expiry_block) else "inactive"
+        return (
+            f"Stem {self.stem_id[:16]}... | lister={self.lister[:10]}... | "
+            f"ask={self.ask_wei} wei | {status}"
+        )
+
+
+@dataclass
+class BidRecord:
+    bid_id: str
+    stem_id: str
+    bidder: str
+    bid_wei: int
+    placed_at_block: int
+    expiry_block: int
+    filled: bool
+    cancelled: bool
+    stem_lister: str = ""
+    stem_ask_wei: int = 0
+
+    @property
+    def is_active(self) -> bool:
+        return not self.filled and not self.cancelled and self.expiry_block > 0
+
+    def to_display(self, block: int = 0) -> str:
+        status = "active" if self.is_active and (block == 0 or block < self.expiry_block) else "inactive"
+        return (
+            f"Bid {self.bid_id[:16]}... | stem={self.stem_id[:16]}... | "
+            f"bidder={self.bidder[:10]}... | {self.bid_wei} wei | {status}"
+        )
