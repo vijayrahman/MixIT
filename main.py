@@ -414,3 +414,55 @@ def _decode_uint256(data: bytes) -> int:
 
 def _decode_address(data: bytes) -> str:
     return "0x" + data[-20:].hex()
+
+
+def _decode_bytes32(data: bytes) -> str:
+    return "0x" + data[-32:].hex()
+
+
+# -----------------------------------------------------------------------------
+# MixFinex contract client (read-only via RPC)
+# ------------------------------------------------------------------------------
+
+class MixFinexClient:
+    def __init__(self, rpc_url: str, contract_address: str):
+        self.rpc_url = rpc_url
+        self.contract = address_to_hex(contract_address)
+        self._selector_cache: Dict[str, bytes] = {}
+
+    def _call(self, sig: str, *args_encoded: bytes) -> str:
+        sel = self._selector_cache.get(sig)
+        if sel is None:
+            sel = _abi_selector(sig)
+            self._selector_cache[sig] = sel
+        data = "0x" + (sel + b"".join(args_encoded)).hex()
+        return rpc_eth_call(self.rpc_url, self.contract, data)
+
+    def get_config(self) -> Dict[str, Any]:
+        data = self._call("getConfig()")
+        if not data or data == "0x":
+            return {}
+        raw = bytes.fromhex(data.replace("0x", ""))
+        return {
+            "treasury": _decode_address(raw[0:32]),
+            "fee_vault": _decode_address(raw[32:64]),
+            "exchange_keeper": _decode_address(raw[64:96]),
+            "keeper": _decode_address(raw[96:128]),
+            "fee_bps": _decode_uint256(raw[128:160]),
+            "min_listing_wei": _decode_uint256(raw[160:192]),
+            "max_listing_wei": _decode_uint256(raw[192:224]),
+            "default_expiry_blocks": _decode_uint256(raw[224:256]),
+            "deployed_block": _decode_uint256(raw[256:288]),
+            "exchange_paused": _decode_uint256(raw[288:320]) != 0,
+        }
+
+    def get_stem(self, stem_id: str) -> Optional[StemListing]:
+        try:
+            data = self._call("getStem(bytes32)", _encode_bytes32(stem_id))
+            if not data or data == "0x" or len(data) < 2 + 32 * 7 * 2:
+                return None
+            raw = bytes.fromhex(data.replace("0x", ""))
+            offset = 0
+            lister = _decode_address(raw[offset:offset+32]); offset += 32
+            content_hash = _decode_bytes32(raw[offset:offset+32]); offset += 32
+            ask_wei = _decode_uint256(raw[offset:offset+32]); offset += 32
