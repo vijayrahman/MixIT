@@ -1038,3 +1038,55 @@ def build_list_stem_intent(contract: str, content_hash_hex: str, ask_wei: int) -
         to=contract,
         value_wei=0,
         data_hex="0x" + data.hex(),
+        gas_limit=200_000,
+        description="listStem",
+    )
+
+
+def build_place_bid_intent(contract: str, stem_id_hex: str, bid_wei: int) -> TxIntent:
+    sel = _abi_selector("placeBid(bytes32,uint256)")
+    data = sel + _encode_bytes32(stem_id_hex) + _encode_uint256(bid_wei)
+    return TxIntent(
+        to=contract,
+        value_wei=bid_wei,
+        data_hex="0x" + data.hex(),
+        gas_limit=250_000,
+        description="placeBid",
+    )
+
+
+def build_fill_stem_intent(contract: str, stem_id_hex: str, ask_wei: int) -> TxIntent:
+    sel = _abi_selector("fillStemOffer(bytes32)")
+    data = sel + _encode_bytes32(stem_id_hex)
+    return TxIntent(
+        to=contract,
+        value_wei=ask_wei,
+        data_hex="0x" + data.hex(),
+        gas_limit=150_000,
+        description="fillStemOffer",
+    )
+
+
+def build_fill_bid_intent(contract: str, bid_id_hex: str) -> TxIntent:
+    sel = _abi_selector("fillBid(bytes32)")
+    data = sel + _encode_bytes32(bid_id_hex)
+    return TxIntent(
+        to=contract,
+        value_wei=0,
+        data_hex="0x" + data.hex(),
+        gas_limit=150_000,
+        description="fillBid",
+    )
+
+
+def build_delist_stem_intent(contract: str, stem_id_hex: str) -> TxIntent:
+    sel = _abi_selector("delistStem(bytes32)")
+    data = sel + _encode_bytes32(stem_id_hex)
+    return TxIntent(
+        to=contract,
+        value_wei=0,
+        data_hex="0x" + data.hex(),
+        gas_limit=100_000,
+        description="delistStem",
+    )
+
