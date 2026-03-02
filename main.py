@@ -50,3 +50,55 @@ def to_checksum_address(addr: str) -> str:
             out += c.upper()
         else:
             out += c
+    return out
+
+
+def random_address_eip55() -> str:
+    raw = "0x" + secrets.token_hex(20)
+    return to_checksum_address(raw)
+
+
+# -----------------------------------------------------------------------------
+# Constants and config
+# ------------------------------------------------------------------------------
+
+class MixITConstants:
+    APP_NAME = "MixIT"
+    VERSION = "1.0.0"
+    CONFIG_DIR = ".mixit"
+    CONFIG_FILE = "config.json"
+    DEFAULT_RPC = "https://eth.llamarpc.com"
+    DEFAULT_CHAIN_ID = 1
+    BPS_DENOM = 10000
+    MAX_FEE_BPS = 450
+    STEM_STATUS_UNKNOWN = 0
+    STEM_STATUS_FILLED = 1
+    STEM_STATUS_DELISTED = 2
+    STEM_STATUS_EXPIRED = 3
+    STEM_STATUS_ACTIVE = 4
+    BID_STATUS_UNKNOWN = 0
+    BID_STATUS_FILLED = 1
+    BID_STATUS_CANCELLED = 2
+    BID_STATUS_EXPIRED = 3
+    BID_STATUS_ACTIVE = 4
+
+
+@dataclass
+class MixITConfig:
+    rpc_url: str = MixITConstants.DEFAULT_RPC
+    chain_id: int = MixITConstants.DEFAULT_CHAIN_ID
+    contract_address: Optional[str] = None
+    private_key: Optional[str] = None
+    treasury: Optional[str] = None
+    fee_vault: Optional[str] = None
+    default_gas_limit: int = 300_000
+    default_gas_price_gwei: float = 30.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rpc_url": self.rpc_url,
+            "chain_id": self.chain_id,
+            "contract_address": self.contract_address,
+            "treasury": self.treasury,
+            "fee_vault": self.fee_vault,
+            "default_gas_limit": self.default_gas_limit,
