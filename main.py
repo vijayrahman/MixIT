@@ -102,3 +102,55 @@ class MixITConfig:
             "treasury": self.treasury,
             "fee_vault": self.fee_vault,
             "default_gas_limit": self.default_gas_limit,
+            "default_gas_price_gwei": self.default_gas_price_gwei,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "MixITConfig":
+        return cls(
+            rpc_url=d.get("rpc_url", MixITConstants.DEFAULT_RPC),
+            chain_id=int(d.get("chain_id", MixITConstants.DEFAULT_CHAIN_ID)),
+            contract_address=d.get("contract_address"),
+            private_key=d.get("private_key"),
+            treasury=d.get("treasury"),
+            fee_vault=d.get("fee_vault"),
+            default_gas_limit=int(d.get("default_gas_limit", 300_000)),
+            default_gas_price_gwei=float(d.get("default_gas_price_gwei", 30.0)),
+        )
+
+    def save(self, path: Optional[Path] = None) -> None:
+        path = path or Path.home() / MixITConstants.CONFIG_DIR / MixITConstants.CONFIG_FILE
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = self.to_dict()
+        if self.private_key:
+            data["private_key"] = self.private_key
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def load(cls, path: Optional[Path] = None) -> "MixITConfig":
+        path = path or Path.home() / MixITConstants.CONFIG_DIR / MixITConstants.CONFIG_FILE
+        if not path.exists():
+            return cls()
+        with open(path) as f:
+            return cls.from_dict(json.load(f))
+
+
+# -----------------------------------------------------------------------------
+# Data models: Stem, Bid, Collab
+# ------------------------------------------------------------------------------
+
+class StemStatus(Enum):
+    UNKNOWN = 0
+    FILLED = 1
+    DELISTED = 2
+    EXPIRED = 3
+    ACTIVE = 4
+
+
+class BidStatus(Enum):
+    UNKNOWN = 0
+    FILLED = 1
+    CANCELLED = 2
+    EXPIRED = 3
+    ACTIVE = 4
