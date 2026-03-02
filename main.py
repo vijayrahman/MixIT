@@ -622,3 +622,55 @@ class MixITCatalog:
     def _load(self) -> None:
         if self.path.exists():
             try:
+                with open(self.path) as f:
+                    data = json.load(f)
+                for k, v in data.get("entries", {}).items():
+                    self.entries[k] = CatalogEntry.from_dict(v)
+            except Exception:
+                pass
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.path, "w") as f:
+            json.dump({"entries": {k: v.to_dict() for k, v in self.entries.items()}}, f, indent=2)
+
+    def add(self, entry: CatalogEntry) -> None:
+        self.entries[entry.content_hash] = entry
+        self.save()
+
+    def get(self, content_hash: str) -> Optional[CatalogEntry]:
+        return self.entries.get(content_hash)
+
+    def list_all(self) -> List[CatalogEntry]:
+        return list(self.entries.values())
+
+    def remove(self, content_hash: str) -> bool:
+        if content_hash in self.entries:
+            del self.entries[content_hash]
+            self.save()
+            return True
+        return False
+
+
+# -----------------------------------------------------------------------------
+# Collaboration and royalty helpers
+# ------------------------------------------------------------------------------
+
+def compute_royalty_split(amount_wei: int, share_bps: int) -> int:
+    return (amount_wei * share_bps) // MixITConstants.BPS_DENOM
+
+
+def compute_fee(amount_wei: int, fee_bps: int) -> int:
+    return (amount_wei * fee_bps) // MixITConstants.BPS_DENOM
+
+
+def compute_net_after_fee(amount_wei: int, fee_bps: int) -> int:
+    return amount_wei - compute_fee(amount_wei, fee_bps)
+
+
+def split_royalty_among(amount_wei: int, shares_bps: List[int]) -> List[int]:
+    total_bps = sum(shares_bps)
+    if total_bps == 0:
+        return [0] * len(shares_bps)
+    return [(amount_wei * bps) // total_bps for bps in shares_bps]
+
