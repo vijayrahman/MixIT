@@ -1454,3 +1454,55 @@ def sanitize_address(s: str) -> str:
 
 
 def require_positive_int(n: int, name: str = "value") -> None:
+    if n < 0:
+        raise ValueError(f"{name} must be non-negative")
+
+
+def require_valid_bps(bps: int) -> None:
+    if bps < 0 or bps > MixITConstants.BPS_DENOM:
+        raise ValueError(f"bps must be 0..{MixITConstants.BPS_DENOM}")
+
+
+# -----------------------------------------------------------------------------
+# Collab share calculator
+# ------------------------------------------------------------------------------
+
+def collab_shares_to_bps(shares: List[Tuple[str, int]]) -> List[int]:
+    """Convert [(address, share_weight), ...] to bps (must sum to 10000 or less)."""
+    total = sum(w for _, w in shares)
+    if total == 0:
+        return [0] * len(shares)
+    return [int(MixITConstants.BPS_DENOM * w / total) for _, w in shares]
+
+
+def cmd_collab_shares(args: List[str]) -> None:
+    if len(args) < 2:
+        print("Usage: collabshares <weight1> <weight2> [weight3 ...]")
+        return
+    weights = [int(x) for x in args]
+    total = sum(weights)
+    bps_list = [int(MixITConstants.BPS_DENOM * w / total) for w in weights] if total else [0] * len(weights)
+    for i, bps in enumerate(bps_list):
+        print(f"  Partner {i + 1}: {bps} bps")
+    print(f"  Total bps: {sum(bps_list)}")
+
+
+# -----------------------------------------------------------------------------
+# Config validation
+# ------------------------------------------------------------------------------
+
+def validate_config(config: MixITConfig) -> List[str]:
+    errs = []
+    if not config.rpc_url:
+        errs.append("rpc_url is empty")
+    if config.chain_id < 0:
+        errs.append("chain_id must be non-negative")
+    if config.contract_address and not validate_address(config.contract_address):
+        errs.append("contract_address is not a valid 40-hex address")
+    if config.treasury and not validate_address(config.treasury):
+        errs.append("treasury is not a valid 40-hex address")
+    if config.fee_vault and not validate_address(config.fee_vault):
+        errs.append("fee_vault is not a valid 40-hex address")
+    return errs
+
+
