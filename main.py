@@ -1558,3 +1558,55 @@ def health_check(config: MixITConfig, client: Optional[MixFinexClient]) -> Dict[
 
 def cmd_health(args: List[str], config: MixITConfig, client: Optional[MixFinexClient]) -> None:
     h = health_check(config, client)
+    print(json.dumps(h, indent=2))
+
+
+# -----------------------------------------------------------------------------
+# File I/O helpers for catalog and remixes
+# ------------------------------------------------------------------------------
+
+def load_catalog_from_path(path: Union[str, Path]) -> MixITCatalog:
+    p = Path(path)
+    cat = MixITCatalog(path=p)
+    if p.exists():
+        cat._load()
+    return cat
+
+
+def save_catalog_to_path(catalog: MixITCatalog, path: Union[str, Path]) -> None:
+    catalog.path = Path(path)
+    catalog.save()
+
+
+def load_remixes_from_path(path: Union[str, Path]) -> RemixRegistry:
+    p = Path(path)
+    reg = RemixRegistry(path=p)
+    if p.exists():
+        reg._load()
+    return reg
+
+
+# -----------------------------------------------------------------------------
+# Numeric and conversion helpers
+# ------------------------------------------------------------------------------
+
+def bps_to_percent(bps: int) -> float:
+    return (bps / MixITConstants.BPS_DENOM) * 100.0
+
+
+def percent_to_bps(p: float) -> int:
+    return int((p / 100.0) * MixITConstants.BPS_DENOM)
+
+
+def wei_to_gwei(wei: int) -> float:
+    return wei / 1e9
+
+
+def gwei_to_wei(gwei: float) -> int:
+    return int(gwei * 1e9)
+
+
+def format_gwei(gwei: float) -> str:
+    return f"{gwei:.2f} Gwei"
+
+
