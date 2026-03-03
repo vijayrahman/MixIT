@@ -1402,3 +1402,55 @@ def fetch_lister_stems(client: MixFinexClient, lister: str, limit: int = 20) -> 
             out.append(s)
     return out
 
+
+def fetch_bidder_bids(client: MixFinexClient, bidder: str, limit: int = 20) -> List[BidRecord]:
+    ids = client.get_bid_ids_by_bidder(address_to_hex(bidder))
+    out = []
+    for bid in ids[:limit]:
+        b = client.get_bid(bid)
+        if b:
+            out.append(b)
+    return out
+
+
+def cmd_list_stems(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 1:
+        print("Usage: liststems <listerAddress> [limit]")
+        return
+    limit = int(args[1]) if len(args) > 1 else 20
+    stems_list = fetch_lister_stems(client, args[0], limit)
+    block = client.current_block()
+    print(format_stem_table(stems_list, block))
+
+
+def cmd_list_bids(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if len(args) < 1:
+        print("Usage: listbids <bidderAddress> [limit]")
+        return
+    limit = int(args[1]) if len(args) > 1 else 20
+    bids_list = fetch_bidder_bids(client, args[0], limit)
+    block = client.current_block()
+    print(format_bid_table(bids_list, block))
+
+
+# -----------------------------------------------------------------------------
+# Validation and sanitization
+# ------------------------------------------------------------------------------
+
+def sanitize_hex(s: str, length: int = 64) -> str:
+    s = s.replace("0x", "").lower().strip()
+    s = "".join(c for c in s if c in "0123456789abcdef")
+    return ("0x" + s.zfill(length)[:length]) if s else ""
+
+
+def sanitize_address(s: str) -> str:
+    return address_to_hex(s)
+
+
+def require_positive_int(n: int, name: str = "value") -> None:
