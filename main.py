@@ -1090,3 +1090,55 @@ def build_delist_stem_intent(contract: str, stem_id_hex: str) -> TxIntent:
         description="delistStem",
     )
 
+
+def build_cancel_bid_intent(contract: str, bid_id_hex: str) -> TxIntent:
+    sel = _abi_selector("cancelBid(bytes32)")
+    data = sel + _encode_bytes32(bid_id_hex)
+    return TxIntent(
+        to=contract,
+        value_wei=0,
+        data_hex="0x" + data.hex(),
+        gas_limit=100_000,
+        description="cancelBid",
+    )
+
+
+# -----------------------------------------------------------------------------
+# Additional CLI: export, report, remix, build
+# ------------------------------------------------------------------------------
+
+def cmd_export(args: List[str], catalog: MixITCatalog, registry: RemixRegistry) -> None:
+    if not args:
+        print("Usage: export catalog | export remixes")
+        return
+    if args[0] == "catalog":
+        print(export_catalog_json(catalog))
+    elif args[0] == "remixes":
+        print(export_remixes_json(registry))
+
+
+def cmd_report(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if not args:
+        print(json.dumps(report_exchange_stats(client), indent=2))
+        return
+    if args[0] == "lister" and len(args) > 1:
+        print(json.dumps(report_lister_activity(client, args[1]), indent=2))
+    elif args[0] == "bidder" and len(args) > 1:
+        print(json.dumps(report_bidder_activity(client, args[1]), indent=2))
+    else:
+        print("Usage: report | report lister <addr> | report bidder <addr>")
+
+
+def cmd_remix(args: List[str], registry: RemixRegistry) -> None:
+    if not args:
+        for r in registry.list_all():
+            print(f"  {r.content_hash} | {r.title} | parent={r.parent_stem_id[:16]}...")
+        return
+    if args[0] == "add":
+        title = args[1] if len(args) > 1 else "Untitled Remix"
+        parent = args[2] if len(args) > 2 else "0x" + "0" * 64
+        ch = random_content_hash()
+        meta = RemixMetadata(
