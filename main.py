@@ -1350,3 +1350,55 @@ def client_get_default_expiry_blocks(client: MixFinexClient) -> int:
 # -----------------------------------------------------------------------------
 # CLI: volume, pause, limits
 # ------------------------------------------------------------------------------
+
+def cmd_volume(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    if not args:
+        s = client.get_exchange_stats()
+        print(f"Total volume: {s.total_volume} wei ({format_eth_short(s.total_volume)} ETH)")
+        return
+    if args[0] == "stem" and len(args) > 1:
+        v = client_get_stem_volume(client, args[1])
+        print(f"Stem {truncate_hex(args[1])} volume: {v} wei")
+    elif args[0] == "lister" and len(args) > 1:
+        v = client_get_lister_volume(client, args[1])
+        print(f"Lister {truncate_hex(args[1])} volume: {v} wei")
+    else:
+        print("Usage: volume | volume stem <stemId> | volume lister <address>")
+
+
+def cmd_limits(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    min_wei = client_get_min_listing_wei(client)
+    max_wei = client_get_max_listing_wei(client)
+    fee_bps = client_get_fee_bps(client)
+    expiry = client_get_default_expiry_blocks(client)
+    print(f"Min listing: {min_wei} wei | Max listing: {max_wei} wei")
+    print(f"Fee: {fee_bps} bps | Default expiry: {expiry} blocks")
+
+
+def cmd_paused(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured.")
+        return
+    p = client_is_paused(client)
+    print("Exchange paused:" if p else "Exchange active.")
+
+
+# -----------------------------------------------------------------------------
+# Batch fetch stems/bids for display
+# ------------------------------------------------------------------------------
+
+def fetch_lister_stems(client: MixFinexClient, lister: str, limit: int = 20) -> List[StemListing]:
+    ids = client.get_stem_ids_by_lister(address_to_hex(lister))
+    out = []
+    for sid in ids[:limit]:
+        s = client.get_stem(sid)
+        if s:
+            out.append(s)
+    return out
+
