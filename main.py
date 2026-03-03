@@ -1194,3 +1194,55 @@ def generate_eip55_addresses(count: int = 10) -> List[str]:
 
 def cmd_gen_addresses(args: List[str]) -> None:
     n = int(args[0]) if args else 10
+    for a in generate_eip55_addresses(n):
+        print(a)
+
+
+# -----------------------------------------------------------------------------
+# More formatting and validation
+# ------------------------------------------------------------------------------
+
+def validate_content_hash(s: str) -> bool:
+    s = s.replace("0x", "").lower()
+    if len(s) != 64:
+        return False
+    return all(c in "0123456789abcdef" for c in s)
+
+
+def validate_address(s: str) -> bool:
+    s = s.replace("0x", "").lower()
+    if len(s) != 40:
+        return False
+    return all(c in "0123456789abcdef" for c in s)
+
+
+def truncate_hex(s: str, head: int = 10, tail: int = 8) -> str:
+    if len(s) <= head + tail + 2:
+        return s
+    return s[: 2 + head] + "..." + s[-tail:]
+
+
+def format_stem_table(stems: List[StemListing], block: int = 0) -> str:
+    lines = ["stem_id | lister | ask_wei | status"]
+    for s in stems:
+        status = "active" if (not s.filled and not s.delisted and (block == 0 or block < s.expiry_block)) else "inactive"
+        lines.append(f"{truncate_hex(s.stem_id)} | {truncate_hex(s.lister)} | {s.ask_wei} | {status}")
+    return "\n".join(lines)
+
+
+def format_bid_table(bids: List[BidRecord], block: int = 0) -> str:
+    lines = ["bid_id | stem_id | bidder | bid_wei | status"]
+    for b in bids:
+        status = "active" if (not b.filled and not b.cancelled and (block == 0 or block < b.expiry_block)) else "inactive"
+        lines.append(f"{truncate_hex(b.bid_id)} | {truncate_hex(b.stem_id)} | {truncate_hex(b.bidder)} | {b.bid_wei} | {status}")
+    return "\n".join(lines)
+
+
+# -----------------------------------------------------------------------------
+# Constants for display and defaults
+# ------------------------------------------------------------------------------
+
+DISPLAY_DECIMALS_ETH = 6
+DISPLAY_TRUNCATE_ADDR = 12
+DISPLAY_TRUNCATE_HASH = 16
+DEFAULT_FEE_BPS = 35
