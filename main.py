@@ -1142,3 +1142,55 @@ def cmd_remix(args: List[str], registry: RemixRegistry) -> None:
         parent = args[2] if len(args) > 2 else "0x" + "0" * 64
         ch = random_content_hash()
         meta = RemixMetadata(
+            title=title,
+            content_hash=ch,
+            parent_stem_id=parent,
+            creator="",
+            bpm=0,
+            key="",
+            tags=[],
+        )
+        registry.add(meta)
+        print(f"Added remix: {ch} | {title}")
+
+
+def cmd_build(args: List[str], config: MixITConfig) -> None:
+    if not config.contract_address or len(args) < 2:
+        print("Usage: build list <contentHash> <askWei> | build bid <stemId> <bidWei> | build fillstem <stemId> <askWei> | build fillbid <bidId> | build delist <stemId> | build cancel <bidId>")
+        return
+    contract = address_to_hex(config.contract_address)
+    kind = args[0].lower()
+    if kind == "list" and len(args) >= 4:
+        intent = build_list_stem_intent(contract, args[1], parse_wei(args[2]))
+    elif kind == "bid" and len(args) >= 4:
+        intent = build_place_bid_intent(contract, args[1], parse_wei(args[2]))
+    elif kind == "fillstem" and len(args) >= 4:
+        intent = build_fill_stem_intent(contract, args[1], parse_wei(args[2]))
+    elif kind == "fillbid" and len(args) >= 3:
+        intent = build_fill_bid_intent(contract, args[1])
+    elif kind == "delist" and len(args) >= 2:
+        intent = build_delist_stem_intent(contract, args[1])
+    elif kind == "cancel" and len(args) >= 2:
+        intent = build_cancel_bid_intent(contract, args[1])
+    else:
+        print("Unknown or incomplete build command.")
+        return
+    print(json.dumps({
+        "to": intent.to,
+        "value_wei": intent.value_wei,
+        "data": intent.data_hex,
+        "gas_limit": intent.gas_limit,
+        "description": intent.description,
+    }, indent=2))
+
+
+# -----------------------------------------------------------------------------
+# EIP-55 batch generator (for reference)
+# ------------------------------------------------------------------------------
+
+def generate_eip55_addresses(count: int = 10) -> List[str]:
+    return [random_address_eip55() for _ in range(count)]
+
+
+def cmd_gen_addresses(args: List[str]) -> None:
+    n = int(args[0]) if args else 10
