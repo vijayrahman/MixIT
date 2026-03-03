@@ -1766,3 +1766,55 @@ def sort_bids_by_bid_desc(bids_list: List[BidRecord]) -> List[BidRecord]:
 def sort_bids_by_bid_asc(bids_list: List[BidRecord]) -> List[BidRecord]:
     return sorted(bids_list, key=lambda b: b.bid_wei)
 
+
+# -----------------------------------------------------------------------------
+# About and license (informational)
+# ------------------------------------------------------------------------------
+
+def cmd_about() -> None:
+    print(f"{MixITConstants.APP_NAME} v{MixITConstants.VERSION}")
+    print("Music sharing and trading app for DJ remixes and collaboration.")
+    print("Companion app for MixFinex-style EVM contracts.")
+    print("Commands: help, version, config, catalog, stats, stem, bid, remix, build, export, report.")
+
+
+def get_app_info() -> Dict[str, Any]:
+    return {
+        "name": MixITConstants.APP_NAME,
+        "version": MixITConstants.VERSION,
+        "config_dir": str(Path.home() / MixITConstants.CONFIG_DIR),
+        "bps_denom": MixITConstants.BPS_DENOM,
+        "max_fee_bps": MixITConstants.MAX_FEE_BPS,
+        "default_fee_bps": DEFAULT_FEE_BPS,
+        "default_expiry_blocks": DEFAULT_EXPIRY_BLOCKS,
+    }
+
+
+def format_listing_summary(stem: StemListing, block: int) -> str:
+    status = "active" if (not stem.filled and not stem.delisted and block < stem.expiry_block) else "inactive"
+    return f"ask={stem.ask_wei} wei | blocks_left={max(0, stem.expiry_block - block)} | {status}"
+
+
+def format_bid_summary(bid: BidRecord, block: int) -> str:
+    status = "active" if (not bid.filled and not bid.cancelled and block < bid.expiry_block) else "inactive"
+    return f"bid={bid.bid_wei} wei | blocks_left={max(0, bid.expiry_block - block)} | {status}"
+
+
+def wei_to_eth_str(wei: int, decimals: int = 6) -> str:
+    return f"{wei_to_eth(wei):.{decimals}f}"
+
+
+def eth_str_to_wei(s: str) -> int:
+    return eth_to_wei(float(s.strip()))
+
+
+def clamp_listing_wei(wei: int, min_wei: int, max_wei: int) -> int:
+    return max(min_wei, min(max_wei, wei))
+
+
+# -----------------------------------------------------------------------------
+
+
+def cmd_info(args: List[str]) -> None:
+    print(json.dumps(get_app_info(), indent=2))
+
