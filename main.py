@@ -1298,3 +1298,55 @@ def client_get_min_listing_wei(client: MixFinexClient) -> int:
     except Exception:
         return 0
 
+
+def client_get_max_listing_wei(client: MixFinexClient) -> int:
+    try:
+        sel = _abi_selector("maxListingWei()")
+        data = "0x" + sel.hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
+
+def client_get_fee_bps(client: MixFinexClient) -> int:
+    try:
+        sel = _abi_selector("feeBps()")
+        data = "0x" + sel.hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
+
+def client_is_paused(client: MixFinexClient) -> bool:
+    try:
+        sel = _abi_selector("exchangePaused()")
+        data = "0x" + sel.hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return False
+        return _decode_uint256(bytes.fromhex(out.replace("0x", ""))) != 0
+    except Exception:
+        return False
+
+
+def client_get_default_expiry_blocks(client: MixFinexClient) -> int:
+    try:
+        sel = _abi_selector("defaultExpiryBlocks()")
+        data = "0x" + sel.hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: volume, pause, limits
+# ------------------------------------------------------------------------------
