@@ -1610,3 +1610,55 @@ def format_gwei(gwei: float) -> str:
     return f"{gwei:.2f} Gwei"
 
 
+# -----------------------------------------------------------------------------
+# Time and block estimation (approximate)
+# ------------------------------------------------------------------------------
+
+BLOCKS_PER_DAY_ETH_APPROX = 7200
+SECONDS_PER_BLOCK_ETH_APPROX = 12
+
+
+def blocks_to_days(blocks: int) -> float:
+    return blocks / BLOCKS_PER_DAY_ETH_APPROX
+
+
+def days_to_blocks(days: float) -> int:
+    return int(days * BLOCKS_PER_DAY_ETH_APPROX)
+
+
+def blocks_to_seconds(blocks: int) -> int:
+    return blocks * SECONDS_PER_BLOCK_ETH_APPROX
+
+
+def cmd_expiry(args: List[str]) -> None:
+    if len(args) < 1:
+        print("Usage: expiry <blocks> | expiry days <number>")
+        return
+    if args[0] == "days" and len(args) > 1:
+        d = float(args[1])
+        b = days_to_blocks(d)
+        print(f"{d} days ≈ {b} blocks")
+    else:
+        b = int(args[0])
+        d = blocks_to_days(b)
+        print(f"{b} blocks ≈ {d:.2f} days")
+
+
+# -----------------------------------------------------------------------------
+# Demo / sample data generation
+# ------------------------------------------------------------------------------
+
+def generate_sample_catalog_entries(n: int = 5) -> List[CatalogEntry]:
+    entries = []
+    for i in range(n):
+        ch = random_content_hash()
+        entries.append(CatalogEntry(
+            name=f"Track_{i+1}",
+            content_hash=ch,
+            artist=f"Artist_{i+1}",
+            genre=["House", "Techno", "Ambient", "DnB", "Dubstep"][i % 5],
+            duration_sec=180 + i * 30,
+        ))
+    return entries
+
+
