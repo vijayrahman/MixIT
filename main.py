@@ -1870,3 +1870,45 @@ def main() -> None:
     elif cmd == "build":
         cmd_build(args, config)
     elif cmd == "genaddresses":
+        cmd_gen_addresses(args)
+    elif cmd == "volume":
+        cmd_volume(args, client)
+    elif cmd == "limits":
+        cmd_limits(args, client)
+    elif cmd == "paused":
+        cmd_paused(args, client)
+    elif cmd == "liststems":
+        cmd_list_stems(args, client)
+    elif cmd == "listbids":
+        cmd_list_bids(args, client)
+    elif cmd == "collabshares":
+        cmd_collab_shares(args)
+    elif cmd == "validate":
+        cmd_validate(args, config)
+    elif cmd == "block":
+        cmd_block(args, client)
+    elif cmd == "chain":
+        cmd_chain(args, config)
+    elif cmd == "health":
+        cmd_health(args, config, client)
+    elif cmd == "expiry":
+        cmd_expiry(args)
+    elif cmd == "demo":
+        cmd_demo(args, catalog, registry)
+    elif cmd == "checksum":
+        cmd_checksum(args)
+    elif cmd == "about":
+        cmd_about()
+    elif cmd == "info":
+        cmd_info(args)
+    elif cmd == "version":
+        cmd_version()
+    elif cmd in ("help", "-h", "--help"):
+        cmd_help()
+    else:
+        print(f"Unknown command: {cmd}")
+        cmd_help()
+
+
+if __name__ == "__main__":
+    main()
