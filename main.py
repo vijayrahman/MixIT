@@ -1662,3 +1662,55 @@ def generate_sample_catalog_entries(n: int = 5) -> List[CatalogEntry]:
     return entries
 
 
+def generate_sample_remixes(n: int = 3, parent_stem: str = "") -> List[RemixMetadata]:
+    parent = parent_stem or "0x" + "00" * 32
+    out = []
+    for i in range(n):
+        ch = random_content_hash()
+        out.append(RemixMetadata(
+            title=f"Remix_{i+1}",
+            content_hash=ch,
+            parent_stem_id=parent,
+            creator="",
+            bpm=120 + i * 5,
+            key=["C", "Am", "F", "G"][i % 4],
+            tags=["remix", "collab"],
+        ))
+    return out
+
+
+def cmd_demo(args: List[str], catalog: MixITCatalog, registry: RemixRegistry) -> None:
+    if not args:
+        print("Usage: demo catalog [n] | demo remixes [n]")
+        return
+    if args[0] == "catalog":
+        n = int(args[1]) if len(args) > 1 else 5
+        for e in generate_sample_catalog_entries(n):
+            catalog.add(e)
+        print(f"Added {n} sample catalog entries.")
+    elif args[0] == "remixes":
+        n = int(args[1]) if len(args) > 1 else 3
+        for r in generate_sample_remixes(n):
+            registry.add(r)
+        print(f"Added {n} sample remixes.")
+
+
+# -----------------------------------------------------------------------------
+# Contract address validation and checksum
+# ------------------------------------------------------------------------------
+
+def ensure_checksum_address(addr: str) -> str:
+    return to_checksum_address(addr)
+
+
+def cmd_checksum(args: List[str]) -> None:
+    if len(args) < 1:
+        print("Usage: checksum <address>")
+        return
+    print(ensure_checksum_address(args[0]))
+
+
+# -----------------------------------------------------------------------------
+# Content hash from various sources (extended)
+# ------------------------------------------------------------------------------
+
