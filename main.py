@@ -1246,3 +1246,55 @@ DISPLAY_DECIMALS_ETH = 6
 DISPLAY_TRUNCATE_ADDR = 12
 DISPLAY_TRUNCATE_HASH = 16
 DEFAULT_FEE_BPS = 35
+DEFAULT_EXPIRY_BLOCKS = 50000
+MIN_LISTING_WEI_DEFAULT = 1000000000000000
+MAX_LISTING_WEI_DEFAULT = 500000000000000000000
+
+
+def format_eth_short(wei: int) -> str:
+    return f"{wei_to_eth(wei):.{DISPLAY_DECIMALS_ETH}f}"
+
+
+def format_address_short(addr: str) -> str:
+    return truncate_hex(addr if addr.startswith("0x") else "0x" + addr, DISPLAY_TRUNCATE_ADDR, 6)
+
+
+# -----------------------------------------------------------------------------
+# Extended contract client (more view wrappers)
+# ------------------------------------------------------------------------------
+
+def client_get_stem_volume(client: MixFinexClient, stem_id: str) -> int:
+    try:
+        sel = _abi_selector("stemVolumeWei(bytes32)")
+        data = "0x" + (sel + _encode_bytes32(stem_id)).hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
+
+def client_get_lister_volume(client: MixFinexClient, lister: str) -> int:
+    try:
+        sel = _abi_selector("listerVolumeWei(address)")
+        data = "0x" + (sel + _encode_address(lister)).hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
+
+def client_get_min_listing_wei(client: MixFinexClient) -> int:
+    try:
+        sel = _abi_selector("minListingWei()")
+        data = "0x" + sel.hex()
+        out = rpc_eth_call(client.rpc_url, client.contract, data)
+        if not out or out == "0x":
+            return 0
+        return _decode_uint256(bytes.fromhex(out.replace("0x", "")))
+    except Exception:
+        return 0
+
