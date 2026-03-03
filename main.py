@@ -1818,3 +1818,55 @@ def clamp_listing_wei(wei: int, min_wei: int, max_wei: int) -> int:
 def cmd_info(args: List[str]) -> None:
     print(json.dumps(get_app_info(), indent=2))
 
+
+# -----------------------------------------------------------------------------
+# Main entry
+# ------------------------------------------------------------------------------
+
+def main() -> None:
+    config = MixITConfig.load()
+    catalog = MixITCatalog()
+    registry = RemixRegistry()
+    client: Optional[MixFinexClient] = None
+    if config.contract_address and config.rpc_url:
+        try:
+            client = MixFinexClient(config.rpc_url, config.contract_address)
+        except Exception:
+            pass
+
+    argv = sys.argv[1:]
+    if not argv:
+        cmd_help()
+        return
+    cmd = argv[0].lower()
+    args = argv[1:]
+
+    if cmd == "config":
+        cmd_config(args, config)
+    elif cmd == "catalog":
+        cmd_catalog(args, catalog)
+    elif cmd == "stats":
+        cmd_stats(args, client)
+    elif cmd == "stem":
+        cmd_stem(args, client)
+    elif cmd == "bid":
+        cmd_bid(args, client)
+    elif cmd == "lister":
+        cmd_lister(args, client)
+    elif cmd == "bidder":
+        cmd_bidder(args, client)
+    elif cmd == "canfill":
+        cmd_can_fill(args, client)
+    elif cmd == "fee":
+        cmd_fee(args)
+    elif cmd == "royalty":
+        cmd_royalty(args)
+    elif cmd == "export":
+        cmd_export(args, catalog, registry)
+    elif cmd == "report":
+        cmd_report(args, client)
+    elif cmd == "remix":
+        cmd_remix(args, registry)
+    elif cmd == "build":
+        cmd_build(args, config)
+    elif cmd == "genaddresses":
