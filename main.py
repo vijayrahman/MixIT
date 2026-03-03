@@ -1506,3 +1506,55 @@ def validate_config(config: MixITConfig) -> List[str]:
     return errs
 
 
+def cmd_validate(args: List[str], config: MixITConfig) -> None:
+    errs = validate_config(config)
+    if not errs:
+        print("Config is valid.")
+        return
+    for e in errs:
+        print(f"  Error: {e}")
+
+
+# -----------------------------------------------------------------------------
+# Block and chain info
+# ------------------------------------------------------------------------------
+
+def cmd_block(args: List[str], client: Optional[MixFinexClient]) -> None:
+    if not client:
+        print("No contract configured. Use config to set rpc_url and contract_address.")
+        return
+    block = client.current_block()
+    print(block)
+
+
+def cmd_chain(args: List[str], config: MixITConfig) -> None:
+    try:
+        cid = rpc_eth_chain_id(config.rpc_url)
+        print(f"Chain ID: {cid}")
+    except Exception as e:
+        print(f"Failed: {e}")
+
+
+# -----------------------------------------------------------------------------
+# Summary and health check
+# ------------------------------------------------------------------------------
+
+def health_check(config: MixITConfig, client: Optional[MixFinexClient]) -> Dict[str, Any]:
+    out = {"config_valid": len(validate_config(config)) == 0, "rpc_ok": False, "contract_ok": False, "block": 0}
+    try:
+        block = rpc_eth_block_number(config.rpc_url)
+        out["rpc_ok"] = True
+        out["block"] = block
+    except Exception:
+        pass
+    if client:
+        try:
+            client.get_config()
+            out["contract_ok"] = True
+        except Exception:
+            pass
+    return out
+
+
+def cmd_health(args: List[str], config: MixITConfig, client: Optional[MixFinexClient]) -> None:
+    h = health_check(config, client)
