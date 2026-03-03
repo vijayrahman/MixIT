@@ -1714,3 +1714,55 @@ def cmd_checksum(args: List[str]) -> None:
 # Content hash from various sources (extended)
 # ------------------------------------------------------------------------------
 
+def content_hash_from_dict(d: Dict[str, Any]) -> str:
+    return content_hash_from_string(json.dumps(d, sort_keys=True))
+
+
+def content_hash_from_metadata(title: str, artist: str, bpm: int) -> str:
+    return content_hash_from_string(f"{title}|{artist}|{bpm}")
+
+
+def verify_content_hash(data: bytes, expected_hash: str) -> bool:
+    computed = content_hash_from_bytes(data)
+    return computed.lower() == expected_hash.lower().replace("0x", "").zfill(64)
+
+
+# -----------------------------------------------------------------------------
+# Listing and bid filters (in-memory)
+# ------------------------------------------------------------------------------
+
+def filter_stems_active(stems_list: List[StemListing], block: int) -> List[StemListing]:
+    return [s for s in stems_list if not s.filled and not s.delisted and block < s.expiry_block]
+
+
+def filter_stems_by_ask_max(stems_list: List[StemListing], max_ask: int) -> List[StemListing]:
+    return [s for s in stems_list if s.ask_wei <= max_ask]
+
+
+def filter_bids_active(bids_list: List[BidRecord], block: int) -> List[BidRecord]:
+    return [b for b in bids_list if not b.filled and not b.cancelled and block < b.expiry_block]
+
+
+def filter_bids_by_stem(bids_list: List[BidRecord], stem_id: str) -> List[BidRecord]:
+    return [b for b in bids_list if b.stem_id == stem_id]
+
+
+# -----------------------------------------------------------------------------
+# Sort helpers for display
+# ------------------------------------------------------------------------------
+
+def sort_stems_by_ask_asc(stems_list: List[StemListing]) -> List[StemListing]:
+    return sorted(stems_list, key=lambda s: s.ask_wei)
+
+
+def sort_stems_by_ask_desc(stems_list: List[StemListing]) -> List[StemListing]:
+    return sorted(stems_list, key=lambda s: s.ask_wei, reverse=True)
+
+
+def sort_bids_by_bid_desc(bids_list: List[BidRecord]) -> List[BidRecord]:
+    return sorted(bids_list, key=lambda b: b.bid_wei, reverse=True)
+
+
+def sort_bids_by_bid_asc(bids_list: List[BidRecord]) -> List[BidRecord]:
+    return sorted(bids_list, key=lambda b: b.bid_wei)
+
